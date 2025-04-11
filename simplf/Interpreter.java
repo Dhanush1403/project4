@@ -1,12 +1,11 @@
 package simplf; 
 
 import java.util.List;
-
 import simplf.Stmt.For;
 
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
     public Environment globals = new Environment();
-    private Environment environment = globals;
+    Environment environment = globals;
 
     Interpreter() {
 
@@ -24,8 +23,10 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitExprStmt(Stmt.Expression stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        evaluate(stmt.expr);
+        return null;
     }
+    
 
     @Override
     public Object visitPrintStmt(Stmt.Print stmt) {
@@ -36,23 +37,50 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Void visitVarStmt(Stmt.Var stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+        environment = environment.define(stmt.name, stmt.name.lexeme, value);
+        return null;
     }
+    
 
     @Override
     public Object visitBlockStmt(Stmt.Block stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        Environment previous = this.environment;
+        try {
+            this.environment = new Environment(previous);
+            for (Stmt s : stmt.statements) {
+                execute(s);
+            }
+        } finally {
+            this.environment = previous;
+        }
+        return null;
     }
+    
 
     @Override
     public Object visitIfStmt(Stmt.If stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        if (isTruthy(evaluate(stmt.cond))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
     }
+    
 
     @Override
     public Object visitWhileStmt(Stmt.While stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        while (isTruthy(evaluate(stmt.cond))) {
+            execute(stmt.body);
+        }
+        return null;
     }
+    
+    
 
     @Override
     public Object visitForStmt(For stmt) {
@@ -61,8 +89,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitFunctionStmt(Stmt.Function stmt) {
-        throw new UnsupportedOperationException("TODO: implement statements");
+        SimplfFunction function = new SimplfFunction(stmt, environment);
+        environment = environment.define(stmt.name, stmt.name.lexeme, function);
+        return null;
     }
+    
 
     @Override
     public Object visitLogicalExpr(Expr.Logical expr) {
@@ -154,12 +185,26 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitVarExpr(Expr.Variable expr) {
-        throw new UnsupportedOperationException("TODO: implement variable references");
+        return environment.get(expr.name);
     }
+    
     @Override
     public Object visitCallExpr(Expr.Call expr) {
-        throw new UnsupportedOperationException("TODO: implement function calls");
+        Object callee = evaluate(expr.callee);
+    
+        List<Object> arguments = new java.util.ArrayList<>();
+        for (Expr argument : expr.args) {
+            arguments.add(evaluate(argument));
+        }
+    
+        if (!(callee instanceof SimplfCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions.");
+        }
+    
+        SimplfCallable function = (SimplfCallable) callee;
+        return function.call(this, arguments);
     }
+    
 
     private Object evaluate(Expr expr) {
         return expr.accept(this);
@@ -167,8 +212,11 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitAssignExpr(Expr.Assign expr) {
-        throw new UnsupportedOperationException("TODO: implement assignments");
+        Object value = evaluate(expr.value);
+        environment.assign(expr.name, value);
+        return value;
     }
+    
 
     @Override
     public Object visitConditionalExpr(Expr.Conditional expr) {
@@ -179,7 +227,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
         }
     }
 
-    private Object execute(Stmt stmt) {
+    Object execute(Stmt stmt) {
         return stmt.accept(this);
     }
 

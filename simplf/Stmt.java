@@ -78,20 +78,22 @@ public abstract class Stmt {
     }
 
     public static class If extends Stmt {
-        final Expr cond;
-        final Stmt thenBranch;
-        final Stmt elseBranch;
-
+        public final Expr cond;
+        public final Stmt thenBranch;
+        public final Stmt elseBranch;
+    
         public If(Expr cond, Stmt thenBranch, Stmt elseBranch) {
             this.cond = cond;
             this.thenBranch = thenBranch;
             this.elseBranch = elseBranch;
         }
-
+    
+        @Override
         <T> T accept(Visitor<T> vis) {
             return vis.visitIfStmt(this);
         }
     }
+    
 
     public static class While extends Stmt {
         final Expr cond;
