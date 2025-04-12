@@ -23,9 +23,9 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitExprStmt(Stmt.Expression stmt) {
-        evaluate(stmt.expr);
-        return null;
+        return evaluate(stmt.expr);
     }
+    
     
 
     @Override
@@ -41,7 +41,7 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
         if (stmt.initializer != null) {
             value = evaluate(stmt.initializer);
         }
-        environment = environment.define(stmt.name, stmt.name.lexeme, value);
+        environment.define(stmt.name, stmt.name.lexeme, value);
         return null;
     }
     
@@ -89,10 +89,12 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Object> {
 
     @Override
     public Object visitFunctionStmt(Stmt.Function stmt) {
+        // Always use the current environment as the closure.
         SimplfFunction function = new SimplfFunction(stmt, environment);
-        environment = environment.define(stmt.name, stmt.name.lexeme, function);
+        environment.define(stmt.name, stmt.name.lexeme, function);
         return null;
     }
+    
     
 
     @Override

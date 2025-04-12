@@ -2,7 +2,7 @@ package simplf;
 
 class Environment {
     private AssocList values;
-    private final Environment enclosing;
+    final Environment enclosing;
 
     Environment() {
         this.values = null;
@@ -20,9 +20,10 @@ class Environment {
     }
 
     Environment define(Token varToken, String name, Object value) {
-        AssocList newValues = AssocList.prepend(values, name, value);
-        return new Environment(newValues, this.enclosing);
+        this.values = AssocList.prepend(this.values, name, value);
+        return this;
     }
+    
 
     void assign(Token name, Object value) {
         if (AssocList.contains(values, name.lexeme)) {

@@ -22,22 +22,22 @@ class SimplfFunction implements SimplfCallable {
     
         for (int i = 0; i < declaration.params.size(); i++) {
             Token param = declaration.params.get(i);
-            localEnv = localEnv.define(param, param.lexeme, args.get(i));
+            localEnv.define(param, param.lexeme, args.get(i));  // using mutating define()
         }
     
-        // Save previous env and restore after call
         Environment previous = interpreter.environment;
+        Object result = null;
         try {
             interpreter.environment = localEnv;
             for (Stmt stmt : declaration.body) {
-                interpreter.execute(stmt);
+                result = interpreter.execute(stmt);
             }
         } finally {
             interpreter.environment = previous;
         }
-    
-        return null; // No return values in Simplf
+        return result;
     }
+    
     
 
     @Override
